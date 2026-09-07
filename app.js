@@ -1,6 +1,6 @@
 'use strict';
 // Stale cached builds have caused confusion twice; say plainly which one is running.
-const BUILD = 'v9 · trimmed loops';
+const BUILD = 'v10 · breath-led blend';
 console.info(`聲音球體 build: ${BUILD}`);
 const $ = selector => document.querySelector(selector);
 const ALL = 6;

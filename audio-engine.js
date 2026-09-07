@@ -17,8 +17,18 @@ const AUDIO_VERSION = 4;
 // Blend mode: every sphere sounds at once, loudest at the focused layer (fractional,
 // so sweeping across the rings crossfades instead of stepping). Sphere 0 (I THINK) stays shut.
 const BLEND_FLOOR = .14;
-const blendWeight = (sphere, focus) =>
-  sphere === 0 ? 0 : Math.max(BLEND_FLOOR, 1 - Math.abs(sphere - focus) * .26);
+// Breath is a far quieter recording than the forest takes, and I TOUCH sits right beside it,
+// so when the sweep reaches I AM it needs room: lift the breath, duck the footsteps 20%.
+// Both fade in with proximity so the sweep stays continuous rather than stepping at I AM.
+const BREATH_LIFT = .35, TOUCH_DUCK = .20;
+const blendWeight = (sphere, focus) => {
+  if (sphere === 0) return 0;
+  const w = Math.max(BLEND_FLOOR, 1 - Math.abs(sphere - focus) * .26);
+  const breathLead = Math.max(0, 1 - Math.abs(focus - 1));
+  if (sphere === 1) return w * (1 + BREATH_LIFT * breathLead);
+  if (sphere === 2) return w * (1 - TOUCH_DUCK * breathLead);
+  return w;
+};
 class SoundField {
   constructor(context = null) {
     const AC = window.AudioContext || window.webkitAudioContext;
