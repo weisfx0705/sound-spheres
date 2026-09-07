@@ -7,12 +7,13 @@ const AUDIO_SCENES = [
   [null, ['breath', 0], ['paper', -.15], ['orchestra', 0], ['audience', .25], ['hall-detail', -.55]],
   [null, ['breath', 0], ['forest-steps', 0], ['forest-birds', 0], ['forest-stream', -.15], ['forest-unknown', .3]]
 ];
-// Skip unusable heads (mic handling, footsteps to position). Loops restart at the offset, never at 0.
 // Bump whenever any file under audio/ is re-exported, or browsers keep the old take.
-const AUDIO_VERSION = 3;
-const AUDIO_OFFSETS = {
-  'forest-birds': 15, 'forest-steps': 5, 'forest-stream': 6, 'forest-unknown': 2
-};
+const AUDIO_VERSION = 4;
+// The forest takes had unusable heads (mic handling, footsteps walking into position).
+// Those seconds are trimmed out of the files themselves -- 15s off forest-birds, 5s off
+// forest-steps, 6s off forest-stream, 2s off forest-unknown -- each with its loop crossfade
+// rebuilt, so playback stays on the plain whole-buffer loop every browser agrees on.
+// Setting loopStart/loopEnd here instead broke the files' own splices and misbehaved off-Chrome.
 // Blend mode: every sphere sounds at once, loudest at the focused layer (fractional,
 // so sweeping across the rings crossfades instead of stepping). Sphere 0 (I THINK) stays shut.
 const BLEND_FLOOR = .14;
@@ -42,11 +43,6 @@ class SoundField {
     this.cache = new Map(); this.nodes = []; this.scene = -1; this.serial = 0;
     this.samples = new Float32Array(this.analyser.fftSize);
   }
-  startLooped(source, name, when) {
-    const offset = Math.min(AUDIO_OFFSETS[name] || 0, Math.max(source.buffer.duration - .5, 0));
-    source.loop = true; source.loopStart = offset; source.loopEnd = source.buffer.duration;
-    source.start(when, offset);
-  }
   async buffer(name) {
     if (this.cache.has(name)) return this.cache.get(name);
     const response = await fetch(`audio/${name}.mp3?v=${AUDIO_VERSION}`, {signal: AbortSignal.timeout(30000)});
@@ -75,7 +71,7 @@ class SoundField {
       const gain = this.ctx.createGain(); gain.gain.value = 0;
       const pan = this.ctx.createStereoPanner(); pan.pan.value = config[i+1][1];
       source.connect(gain); gain.connect(pan); pan.connect(this.master);
-      this.startLooped(source, config[i+1][0], now + .05);
+      source.loop = true; source.start(now + .05);
       return {source, gain, pan};
     });
     this.scene = index;
@@ -92,7 +88,7 @@ class SoundField {
       const gain=this.ctx.createGain();gain.gain.value=0;
       const pan=this.ctx.createStereoPanner();pan.pan.value=[-.62,.32,0,-.3,.65][i];
       source.connect(gain);gain.connect(pan);pan.connect(this.master);
-      this.startLooped(source,'think-'+THOUGHTS[i].id,now+.05+i*.55);
+      source.loop=true; source.start(now+.05+i*.55);
       return {source,gain,pan};
     });
     muted.forEach((isMuted,i)=>{if(isMuted)this.closeThought(i)});
