@@ -18,9 +18,11 @@ const AUDIO_VERSION = 4;
 // so sweeping across the rings crossfades instead of stepping). Sphere 0 (I THINK) stays shut.
 const BLEND_FLOOR = .14;
 // Breath is a far quieter recording than the forest takes, and I TOUCH sits right beside it,
-// so when the sweep reaches I AM it needs room: lift the breath, duck the footsteps 20%.
-// Both fade in with proximity so the sweep stays continuous rather than stepping at I AM.
-const BREATH_LIFT = .35, TOUCH_DUCK = .20;
+// so when the sweep reaches I AM it needs room: lift the breath, duck the footsteps. I TOUCH
+// was still stealing the scene and breath still wasn't leading enough, so both are pushed
+// further than the first pass. Both fade in with proximity so the sweep stays continuous
+// rather than stepping at I AM, and I TOUCH's own peak (when it IS the focus) is untouched.
+const BREATH_LIFT = .70, TOUCH_DUCK = .40;
 const blendWeight = (sphere, focus) => {
   if (sphere === 0) return 0;
   const w = Math.max(BLEND_FLOOR, 1 - Math.abs(sphere - focus) * .26);
