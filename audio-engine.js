@@ -7,6 +7,10 @@ const AUDIO_SCENES = [
   [null, ['breath', 0], ['paper', -.15], ['orchestra', 0], ['audience', .25], ['hall-detail', -.55]],
   [null, ['breath', 0], ['forest-steps', 0], ['forest-birds', 0], ['forest-stream', -.15], ['forest-unknown', .3]]
 ];
+// Skip unusable heads (mic handling, footsteps to position). Loops restart at the offset, never at 0.
+const AUDIO_OFFSETS = {
+  'forest-birds': 15, 'forest-steps': 5, 'forest-stream': 6, 'forest-unknown': 2
+};
 class SoundField {
   constructor(context = null) {
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -30,6 +34,11 @@ class SoundField {
     this.analyser.connect(this.ctx.destination);
     this.cache = new Map(); this.nodes = []; this.scene = -1; this.serial = 0;
     this.samples = new Float32Array(this.analyser.fftSize);
+  }
+  startLooped(source, name, when) {
+    const offset = Math.min(AUDIO_OFFSETS[name] || 0, Math.max(source.buffer.duration - .5, 0));
+    source.loop = true; source.loopStart = offset; source.loopEnd = source.buffer.duration;
+    source.start(when, offset);
   }
   async buffer(name) {
     if (this.cache.has(name)) return this.cache.get(name);
@@ -55,11 +64,11 @@ class SoundField {
       n.source.onended = () => { n.source.disconnect(); n.gain.disconnect(); n.pan.disconnect(); };
     }
     this.nodes = buffers.map((buffer, i) => {
-      const source = this.ctx.createBufferSource(); source.buffer = buffer; source.loop = true;
+      const source = this.ctx.createBufferSource(); source.buffer = buffer;
       const gain = this.ctx.createGain(); gain.gain.value = 0;
       const pan = this.ctx.createStereoPanner(); pan.pan.value = config[i+1][1];
       source.connect(gain); gain.connect(pan); pan.connect(this.master);
-      source.start(now + .05);
+      this.startLooped(source, config[i+1][0], now + .05);
       return {source, gain, pan};
     });
     this.scene = index;
@@ -72,11 +81,11 @@ class SoundField {
     if(ticket!==this.mindSerial)return false;
     const now=this.ctx.currentTime;
     this.mindNodes=buffers.map((buffer,i)=>{
-      const source=this.ctx.createBufferSource();source.buffer=buffer;source.loop=true;
+      const source=this.ctx.createBufferSource();source.buffer=buffer;
       const gain=this.ctx.createGain();gain.gain.value=0;
       const pan=this.ctx.createStereoPanner();pan.pan.value=[-.62,.32,0,-.3,.65][i];
       source.connect(gain);gain.connect(pan);pan.connect(this.master);
-      source.start(now+.05+i*.55);
+      this.startLooped(source,'think-'+THOUGHTS[i].id,now+.05+i*.55);
       return {source,gain,pan};
     });
     muted.forEach((isMuted,i)=>{if(isMuted)this.closeThought(i)});
