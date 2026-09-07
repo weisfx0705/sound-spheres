@@ -1,4 +1,7 @@
 'use strict';
+// Stale cached builds have caused confusion twice; say plainly which one is running.
+const BUILD = 'v8 · real recordings';
+console.info(`聲音球體 build: ${BUILD}`);
 const $ = selector => document.querySelector(selector);
 const ALL = 6;
 const BLEND = 7;
