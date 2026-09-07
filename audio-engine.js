@@ -8,6 +8,8 @@ const AUDIO_SCENES = [
   [null, ['breath', 0], ['forest-steps', 0], ['forest-birds', 0], ['forest-stream', -.15], ['forest-unknown', .3]]
 ];
 // Skip unusable heads (mic handling, footsteps to position). Loops restart at the offset, never at 0.
+// Bump whenever any file under audio/ is re-exported, or browsers keep the old take.
+const AUDIO_VERSION = 3;
 const AUDIO_OFFSETS = {
   'forest-birds': 15, 'forest-steps': 5, 'forest-stream': 6, 'forest-unknown': 2
 };
@@ -47,7 +49,7 @@ class SoundField {
   }
   async buffer(name) {
     if (this.cache.has(name)) return this.cache.get(name);
-    const response = await fetch(`audio/${name}.mp3?v=2`, {signal: AbortSignal.timeout(30000)});
+    const response = await fetch(`audio/${name}.mp3?v=${AUDIO_VERSION}`, {signal: AbortSignal.timeout(30000)});
     if (!response.ok) throw new Error(`音訊未載入：${name}`);
     const buffer = await this.ctx.decodeAudioData(await response.arrayBuffer());
     this.cache.set(name, buffer);
