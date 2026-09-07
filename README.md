@@ -1,4 +1,4 @@
-# 聲音球體 Sound Spheres · Real Recordings + Inner Voices v3
+# 聲音球體 Sound Spheres · Mobile Listening Slides v4
 
 義守大學電影與電視學系陳嘉暐老師製作。
 Sound Spheres 概念原作者：David Sonnenschein。六個層次依課程教材互動改編。
@@ -11,20 +11,24 @@ Sound Spheres 概念原作者：David Sonnenschein。六個層次依課程教材
 
 本機：`python3 -m http.server 8765`，開啟 http://localhost:8765。
 
-GitHub Pages：將 index.html、resources.html、style.css、app.js、audio-engine.js、inner-voices.js、audio/ 全資料夾及 .nojekyll 提交到 main 根目錄。Settings → Pages → Deploy from a branch → main / (root)。專案已設定此方式，push 後自動部署。所有資源使用相對路徑，支援專案子路徑。
+GitHub Pages：將 index.html、resources.html、style.css、experience.css、app.js、scene-data.js、audio-engine.js、inner-voices.js、audio/ 全資料夾及 .nojekyll 提交到 main 根目錄。Settings → Pages → Deploy from a branch → main / (root)。專案已設定此方式，push 後自動部署。所有資源使用相對路徑，支援專案子路徑。
 
-## v3 的行為
+## v4：一頁式手機體驗
 
-- 開始體驗先載入五段不同聲線的 AI 內在碎念：待辦太多、別人怎麼想、還不夠好、日常小混亂、明天怎麼辦。逐一點「先放下」或「一鍵安放全部」，全部關閉後才解鎖外層、場景、引導與真實環境模式。暫停不解鎖；可重新測試。
-- 解鎖後，「先聽完整聲景」或點選任一場景卡，會立即開始載入並播放該地點的完整錄音混音。切換不再強制回到靜音層次。
-- 入口 I THINK 是五段聲音交疊的互動小練習；全部關閉後，再選 I THINK 則保持安靜。
-- I AM 至 I DON'T KNOW 以真實錄音逐層展開；目前層次最清楚，較內層輕聲保留。
-- 「只聽這一層」關閉其他聲音，便於教學比較。
-- 六分鐘引導每層一分鐘；暫停與背景頁面不計時。
-- 預設音量 70%，逐檔做響度處理與循環接點，混音端使用動態壓縮與柔性峰值限制。音量表來自實際音訊分析，並非裝飾動畫。
-- 顯示音訊載入狀態，載入可取消、失敗可重試；快速換場景時只有最後一次選擇生效。播放需瀏覽器使用者手勢。
-- 「聆聽真實環境」停止音訊，不存取麥克風。
-- 筆記以場景與層次分別儲存在 localStorage，可匯出 Markdown。
+主畫面使用動態視窗高度（100dvh）和固定操作區，不是長捲動頁面。依序走過六個層次，再到第七頁「全部亮起」。
+
+1. I THINK：中心亮起，五段 AI 內在碎念交疊。逐一安放或一鍵全部關閉。未完成前不能往外前進，暫停不解鎖。
+2. I AM 至 I DON'T KNOW：按下一層，上一圈熄滅、下一圈亮起；只播放當前層次，使用平滑淡化。
+3. 全部亮起：六圈一起亮起、六層一起發聲。預設重新包含 I THINK 語音，可關閉「包含內在聲音」讓中心保持安靜。
+4. 最後可按「再走一次」，重新進入五個念頭的練習。
+
+- 上一層、播放／暫停、下一層固定在畫面下方。準備載入時播放鍵可取消。
+- 已走過的層次可點選進度條或球體。支援球體區域滑動與鍵盤方向鍵；空白鍵切換播放（文字輸入與對話框不攔截）。
+- 「換個地方」以原生 dialog 開啟五個場景選項；保留目前層次。在關卡尚未解鎖時也可先選目的地，外在聲音仍不播放。
+- 音量、真實環境與六分鐘引導放在設定面板。六分鐘引導從 I AM 開始，每頁一分鐘，最後停在全景；面板開啟時暫停計時，背景頁面停止播放。
+- 筆記面板鎖定開啟時的場景／層次，保留之前版本的 localStorage 記錄，新增全景筆記，支援 Markdown 匯出。
+- 所有逐層音訊皆為獨聽；全景則做專門平衡，保留身體、接觸、眼前、視線外、未知與內在聲音。
+- 沒有麥克風權限、雲端筆記或執行期 API。
 
 ## 音效與教學界線
 

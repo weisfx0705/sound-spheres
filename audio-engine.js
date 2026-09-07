@@ -82,6 +82,10 @@ class SoundField {
     muted.forEach((isMuted,i)=>{if(isMuted)this.closeThought(i)});
     return true;
   }
+  async prepareAllMind() {
+    if(this.mindNodes.some(node=>node.closed))this.resetMind();
+    return this.prepareMind();
+  }
   closeThought(index) {
     const t=this.ctx.currentTime;
     this.mindNodes.forEach((n,i)=>{if((index===null||index===i)&&!n.closed){n.closed=true;n.gain.gain.setTargetAtTime(0,t,.08);n.source.stop(t+.3);n.source.onended=()=>{n.source.disconnect();n.gain.disconnect();n.pan.disconnect()}}});
@@ -91,13 +95,13 @@ class SoundField {
     for(const n of this.mindNodes){n.source.stop();n.source.disconnect();n.gain.disconnect();n.pan.disconnect()}
     this.mindNodes=[];
   }
-  mix({playing, real, layer, panorama, solo, volume, gateOpen=true, muted=[]}) {
+  mix({playing, real, layer, panorama, solo, volume, gateOpen=true, muted=[], includeMind=false}) {
     const t = this.ctx.currentTime;
     this.master.gain.setTargetAtTime(playing && !real ? volume / 100 : 0, t, .14);
-    this.mindNodes.forEach((n,i)=>n.gain.gain.setTargetAtTime(!gateOpen&&!muted[i] ? .62 : 0,t,.12));
+    this.mindNodes.forEach((n,i)=>n.gain.gain.setTargetAtTime(!gateOpen&&!muted[i] ? .62 : panorama&&includeMind ? .18 : 0,t,.12));
     this.nodes.forEach((n, i) => {
       const sphere = i + 1;
-      const fullMix = this.scene === 0 ? [0, .08, .45, .8, 1, .12] : this.scene === 1 ? [0, .10, .24, .76, .30, .12] : [0, .10, .24, .95, .42, .16];
+      const fullMix = this.scene === 0 ? [0, .30, .50, .75, .95, .30] : this.scene === 1 ? [0, .35, .45, .72, .40, .35] : [0, .35, .45, .85, .55, .40];
       const weight = !gateOpen ? 0 : panorama ? fullMix[sphere]
         : layer === 0 ? 0
         : solo ? (sphere === layer ? 1 : 0)

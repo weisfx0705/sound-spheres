@@ -1,105 +1,195 @@
 'use strict';
-const $=s=>document.querySelector(s);
-const layers=[
-['I THINK','腦海中的聲音','安放','先讓腦海，空出一點位置。','待辦事項、回憶、心裡的自言自語，都可能正在發聲。察覺它們，再輕輕放下；不必責怪自己分心。','留意一個浮現的念頭。不追著它走，把注意力交回身體。'],
-['I AM','身體本身的聲音','呼吸','你在這裡，就已經有聲音。','聽見自然的呼吸、吞嚥，以及衣領邊微小的起伏。聲音不是從遠方開始，而是從你存在的地方開始。','維持自己的呼吸節奏。聽一口氣進來，再聽它離開。'],
-['I TOUCH','我接觸而生的聲音','觸碰','世界，在接觸的地方回應。','手指、衣料、鞋底，每一次接觸都讓你參與聲景。注意：這一層是你自己的行動所製造的聲音。','輕輕摩擦指尖或袖口。留意動作停止後，聲音如何消失。'],
-['I SEE','我看見聲源的聲音','看見','讓耳朵，與眼睛相遇。','把注意力延伸到眼前。看見動作發生，也聽見它留下的聲音。聲音與動作，總是同時抵達嗎？','選一個眼前正在發聲的物件。真實環境中，觀察它的動作。'],
-['I KNOW','看不見，但認得的聲音','辨認','有些熟悉，不需要看見。','背後的車流、隔壁的交談、遠處的鐘聲。即使看不到，你仍可能憑經驗辨認；也容許自己的猜測出錯。','找一個看不到聲源、卻覺得熟悉的聲音。你憑什麼認出它？'],
-["I DON'T KNOW",'尚未命名的聲音','未知','暫時，不必知道答案。','停留在無法辨認的聲響。先不找來源，只聽它的高低、質地、長短，以及在空間中的移動。','用擬聲詞記錄它，例如「嗡——」「窸、窸」。保留未知。']];
-const scenes=[
-['POST OFFICE','郵局・寄出一封信','紙張 / 蓋章 / 櫃檯人聲','紙張在指尖展開，印章落在右前方；櫃檯交談在空間裡延伸。郵局情境重構，室內底景來自芬蘭。',['手中信紙的摩擦','想像眼前櫃檯正在蓋章','看不見的另一側櫃檯交談','門後未能辨認的叩響']],
-['TAIPEI STREET','台北・街角午後','車流 / 鳥鳴 / 夏蟬','台北真實街頭雙耳錄音，疊入阿里山鳥蟲聲；以台灣實錄重構樹蔭下的城市午後。',['袖口與手臂的摩擦','想像眼前車輛駛過街口','樹蔭後方熟悉的鳥聲','遠處未命名的持續聲響']],
-['LIVE CONCERT','演唱會・謝幕人海','掌聲 / 歡呼 / 人群','停在歌曲之間的謝幕時刻。大片掌聲與歡呼包圍你，身後的交談仍在延續。這裡播放真實人群，沒有歌曲。',['自己的衣料摩擦','想像眼前觀眾拍手、歡呼','身後觀眾低聲交談','人海裡難以定位的尾聲']],
-['CONCERT HALL','音樂廳・開演之前','弦樂 / 調音 / 座席細響','雙簧管的音高引出樂團調音，觀眾在座位間低語。聽的是開演前真實樂團的聲音，並非完整曲目。',['手中節目單的翻動','想像眼前樂團正在調音','身後座席傳來的交談','遠處未能命名的摩擦聲']],
-['ALISHAN FOREST','阿里山・林間慢行','落葉腳步 / 晨鳥 / 溪流','阿里山清晨的鳥蟲與溪流實錄，加入森林腳步，重構沿著林間小徑緩行的聆聽位置。',['鞋底壓過落葉與碎石','想像眼前枝頭發出晨間鳴聲','看不見、卻認得的溪流','林間尚未辨認的短促叫聲']]];
-let layer=0,scene=4,playing=false,real=false,guided=false,panorama=false,solo=false,loading=false,elapsed=0,stageTime=0,engine=null,requestId=0,message='';
-let gateOpen=false,gateStarted=false,muted=Array(5).fill(false);
-let notes={};try{const data=JSON.parse(localStorage.getItem('sound-spheres-notes')||'{}');if(data&&typeof data==='object'&&!Array.isArray(data))notes=data}catch{}
-const key=()=>`${scene}-${layer}`;
-$('#steps').innerHTML=layers.map((l,i)=>`<button class="step" data-layer="${i}"><small>0${i+1}</small><strong>${l[0]}</strong><span>${l[1]}</span></button>`).join('');
-$('#orb').innerHTML=layers.map((l,i)=>`<div class="ring" style="--size:${24+i*15}%"></div>`).join('');
-$('#sceneCards').innerHTML=scenes.map((s,i)=>`<button class="scene" data-scene="${i}" aria-label="試聽${s[1]}"><div class="landscape"><i>REAL SOUND / 0${i+1}</i><span class="scene-listen">▶ 聽見這裡</span></div><div class="scene-text"><small>${s[0]}</small><strong>${s[1]}</strong><span>${s[2]}</span></div></button>`).join('');
-$('#thoughtCards').innerHTML=THOUGHTS.map((v,i)=>`<article class="thought" data-thought="${i}"><div class="thought-index">VOICE 0${i+1}<span class="thought-waves" aria-hidden="true">▂ ▅ ▃ ▆</span></div><h3>${v.title}</h3><p>「${v.text}」</p><button data-mute="${i}" aria-label="關閉${v.title}的內在聲音">先放下 ×</button></article>`).join('');
-function render(){
- const l=layers[layer];
- document.querySelectorAll('.step').forEach((e,i)=>{e.classList.toggle('active',i===layer&&!panorama);e.setAttribute('aria-pressed',i===layer&&!panorama);e.disabled=!gateOpen&&i>0});
- document.querySelectorAll('.ring').forEach((e,i)=>e.classList.toggle('active',panorama||i<=layer));
- document.querySelectorAll('.scene').forEach((e,i)=>{e.classList.toggle('selected',i===scene);e.setAttribute('aria-pressed',i===scene);e.disabled=!gateOpen});
- $('#orbEnglish').textContent=panorama?'THE WHOLE SOUNDSCAPE':l[0];$('#orbWord').textContent=!gateOpen?'紛擾':panorama?'置身':l[2];
- $('#breath').textContent=!gateOpen?`${5-muted.filter(Boolean).length} 個念頭，等你慢慢安放`:panorama?scenes[scene][1]:layer===0?'念頭已安放，讓安靜停留一下':layer===1?'聽見呼吸，不必跟隨它的節奏':'讓注意力向外延伸';
- $('#stepMeta').textContent=panorama?'完整聲景 / REAL RECORDINGS':`0${layer+1} / ${l[0]}`;
- $('#stepTitle').textContent=!gateOpen?'先把腦內的五個分頁，一個個關上。':panorama?scenes[scene][1]:l[3];
- $('#stepCopy').textContent=panorama?scenes[scene][3]:l[4];
- $('#stepAction').textContent=!gateOpen?'在上方小練習按下播放，聽見五段碎念交疊。逐一關閉，或一鍵安放全部；全部關閉後，從呼吸出發。':panorama?'先感受整個地方。準備好後，點選 I THINK，讓聲景安靜下來，再從呼吸往外探索。':l[5]+(layer>=2&&!real?` 情境聲音：${scenes[scene][4][layer-2]}。`:'');
- $('#noteLabel').textContent=`${scenes[scene][1]} · ${l[0]} · ${l[1]}`;
- if(document.activeElement!==$('#notes'))$('#notes').value=notes[key()]||'';
- $('#sceneDetail').textContent=scenes[scene][3];
- $('#play').innerHTML=loading?'取消載入 <span>×</span>':playing?'暫停聆聽 <span>Ⅱ</span>':(gateOpen?'開始聆聽 <span>↗</span>':'開始體驗 <span>↗</span>');
- $('#auto').textContent=guided?'Ⅱ 停止自動引導':'▷ 六分鐘引導';
- $('#next').textContent=panorama?'從內在開始 →':layer===5?'回到內在 ↺':'下一層 →';
- $('#status').textContent=message||(!gateOpen?(loading?'正在準備五段內在聲音…':playing?`I THINK · ${5-muted.filter(Boolean).length} 個念頭交疊中`:gateStarted?'已暫停碎念 · 關閉全部念頭後才能出發':'從 I THINK 開始 · 先聽見腦內的聲音'):loading?'正在載入真實音訊，首次約需數秒…':playing?(real?'真實環境 · 不播放音訊':panorama?`${scenes[scene][1]} · 完整聲景`:layer===0?'I THINK · 刻意留白，準備好請進入 I AM':`${scenes[scene][1]} · ${guided?'六分鐘引導':solo?'只聽這一層':'逐層展開'}`):'尚未播放 · 點選場景可直接試聽');
- $('#mode').textContent=real?'切換：錄音聲景':'切換：聆聽真實環境';
- $('#solo').textContent=solo?'✓ 只聽這一層':'只聽這一層';$('#solo').setAttribute('aria-pressed',solo);
- $('#sceneStop').textContent=playing||loading?'暫停聲景 Ⅱ':'試聽此處 ▶';$('#solo').disabled=!gateOpen||panorama||real;$('#preview').setAttribute('aria-pressed',panorama);$('#preview').disabled=!gateOpen;$('#auto').disabled=!gateOpen;$('#next').disabled=!gateOpen;$('#mode').disabled=!gateOpen;
- $('#meterLabel').textContent=loading?'載入中':playing&&!real&&(!gateOpen||panorama||layer>0)?'音訊輸出':playing&&gateOpen&&layer===0&&!real?'I THINK · 安靜':'安靜';
- document.body.classList.toggle('playing',playing);$('#volumeValue').textContent=$('#volume').value+'%';
- renderMind();
- if(engine)engine.mix({playing:playing&&!loading,real,layer,panorama,solo,gateOpen,muted,volume:Number($('#volume').value)});
+const $ = selector => document.querySelector(selector);
+const ALL = 6;
+const state = {slide:0,scene:4,furthest:0,gateOpen:false,gateStarted:false,muted:Array(5).fill(false),playing:false,loading:false,real:false,includeMind:true,guided:false,stageTime:0,volume:70,message:'',request:0};
+let engine = null;
+let notes = {};
+try { const saved=JSON.parse(localStorage.getItem('sound-spheres-notes')||'{}'); if(saved && typeof saved==='object' && !Array.isArray(saved))notes=saved; } catch {}
+const sceneColors=['120,141,95','91,143,134','140,109,101','162,132,77','103,144,108'];
+const copy = [
+  ['先聽見，腦內的自己。','五個念頭搶著說話。逐一安放，讓安靜慢慢回來。'],
+  ['從一口呼吸，開始。','不必改變節奏。聽見氣息進來，再慢慢離開。'],
+  ['每次觸碰，都有回聲。','讓注意力來到身體與世界接觸的地方。'],
+  ['讓耳朵，與眼睛相遇。','想像聲源就在眼前；留意動作與聲音的關係。'],
+  ['看不見，也能認得。','循著熟悉的聲音，把注意力放到視線之外。'],
+  ['暫時，不必知道答案。','只聽音色、節奏與遠近，先不急著替它命名。'],
+  ['讓整個世界，一起響起。','六圈一起亮起，感受內在、身體與世界同時存在。']
+];
+const noteKey=()=>`${state.scene}-${state.slide===ALL?'all':state.slide}`;
+const canGo=slide=>slide>=0 && slide<=ALL && (slide===0 || (state.gateOpen && slide<=state.furthest));
+
+$('#sphereRings').innerHTML=Array.from({length:6},(_,i)=>{
+ const r=30+i*21,angle=(-145+i*38)*Math.PI/180,x=160+r*Math.cos(angle),y=160+r*Math.sin(angle);
+ return `<g class="sphere-ring" data-ring="${i}" style="--i:${i}">${i===0?'<circle class="center-fill" cx="160" cy="160" r="29"/>':''}<circle class="ring-haze" cx="160" cy="160" r="${r}"/><circle class="ring-base" cx="160" cy="160" r="${r}"/><circle class="ring-light" cx="160" cy="160" r="${r}"/><circle class="ring-mark" cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" r="1.6"/><circle class="ring-hit" data-jump="${i}" cx="160" cy="160" r="${r}"/></g>`;
+}).join('');
+$('#progress').innerHTML=Array.from({length:7},(_,i)=>`<button data-slide="${i}" aria-label="${i===ALL?'全部亮起':`第 ${i+1} 層 ${layers[i][0]}`}" title="${i===ALL?'全部亮起':layers[i][0]}"></button>`).join('');
+$('#thoughtControls').innerHTML=THOUGHTS.map((v,i)=>`<button class="thought-button" data-mute="${i}" aria-label="關閉${v.title}的內在聲音"><span>${v.title}</span><span class="voice-indicator" aria-hidden="true">×</span></button>`).join('')+'<button class="thought-button quiet-all" id="quietAll">全部安放 <span aria-hidden="true">×</span></button>';
+$('#sceneList').innerHTML=scenes.map((s,i)=>`<button class="scene-choice" data-scene="${i}" aria-pressed="${i===state.scene}"><span class="scene-number">0${i+1}</span><span><strong>${s[1]}</strong><small>${s[2]}</small></span><span class="chosen" aria-hidden="true">${i===state.scene?'✓':'→'}</span></button>`).join('');
+
+function mix() {
+ engine?.mix({playing:state.playing&&!state.loading,real:state.real,layer:Math.min(state.slide,5),panorama:state.slide===ALL,solo:true,volume:state.volume,gateOpen:state.gateOpen,muted:state.muted,includeMind:state.includeMind});
 }
-function setLayer(n){if(!gateOpen&&n>0)return;layer=n;stageTime=0;panorama=false;message='';render()}
-function stop(){requestId++;playing=false;loading=false;message='';render()}
-async function start(){
- const ticket=++requestId;message='';
- if(real&&gateOpen){playing=true;loading=false;render();return}
- try{
-  engine??=new SoundField();
-  const resumed=engine.ctx.resume(); // Called inside the user gesture for Safari/iOS.
-  loading=true;playing=false;render();
-  await resumed;const ready=await (gateOpen?engine.prepare(scene):engine.prepareMind(muted));
-  if(ticket!==requestId||!ready)return;
-  loading=false;playing=true;if(!gateOpen)gateStarted=true;render();
- }catch(error){if(ticket!==requestId)return;playing=false;loading=false;message='音訊載入失敗。請檢查連線後再按開始，或切換真實環境。';render()}
+function statusText() {
+ if(state.message)return state.message;
+ if(state.loading)return state.gateOpen?'正在載入這裡的聲音…':'正在準備五個內在聲音…';
+ if(!state.gateOpen)return state.playing?`${state.muted.filter(v=>!v).length} 個念頭交疊中 · 點選念頭，先放下。`:state.gateStarted?'已暫停。安放全部念頭，才能出發。':'戴上耳機，按下開始。';
+ if(state.slide===0)return '中心已安靜。準備好，從呼吸出發。';
+ if(!state.playing)return '已暫停 · 照自己的步調。';
+ if(state.real)return '聆聽你所在的真實環境。';
+ if(state.guided)return `自動引導 · ${Math.max(0,60-Math.floor(state.stageTime))} 秒後前進`;
+ return state.slide===ALL?(state.includeMind?'六層一起聽 · 也能留白中心。':'中心保持安靜 · 聽身體與世界。'):`只聽 ${layers[state.slide][0]} · 其餘圈保持安靜`;
 }
-$('#play').onclick=()=>{if(playing||loading)stop();else{start();if(!gateOpen)$('#mindGate').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'})}};
-$('#steps').onclick=e=>{const b=e.target.closest('[data-layer]');if(b){guided=false;setLayer(+b.dataset.layer)}};
-$('#sceneCards').onclick=e=>{const b=e.target.closest('[data-scene]');if(b&&gateOpen){scene=+b.dataset.scene;guided=false;panorama=true;real=false;stageTime=0;start()}};
-$('#sceneStop').onclick=()=>{if(!gateOpen){start();return}if(playing||loading)stop();else{panorama=true;real=false;guided=false;start()}};
-$('#preview').onclick=()=>{if(!gateOpen)return;guided=false;panorama=true;real=false;start()};
-$('#next').onclick=()=>setLayer(panorama?0:(layer+1)%6);
-$('#mode').onclick=()=>{if(!gateOpen)return;const wasActive=playing||loading;stop();real=!real;panorama=false;render();if(wasActive)start()};
-$('#solo').onclick=()=>{solo=!solo;render()};
-$('#volume').oninput=()=>render();
-$('#auto').onclick=()=>{if(!gateOpen)return;guided=!guided;if(guided){layer=0;panorama=false;solo=false;elapsed=0;stageTime=0;start()}render()};
-function renderMind(){
- const remaining=muted.filter(v=>!v).length;
- $('#mindCount').textContent=String(remaining).padStart(2,'0');
- $('#mindGate').classList.toggle('gate-complete',gateOpen);
- document.querySelectorAll('.thought').forEach((card,i)=>{
-  card.classList.toggle('is-quiet',muted[i]);card.classList.toggle('is-talking',!muted[i]&&!gateOpen&&playing);
-  const button=card.querySelector('button');button.disabled=muted[i];button.textContent=muted[i]?'已放下 ✓':'先放下 ×';
+function render() {
+ const s=state.slide,all=s===ALL,quiet=s===0&&state.gateOpen;
+ document.documentElement.style.setProperty('--scene-rgb',sceneColors[state.scene]);
+ document.body.classList.toggle('playing',state.playing&&!state.loading);
+ document.body.classList.toggle('paused',!state.playing);
+ $('#slideEnglish').textContent=all?'07 / ALL TOGETHER':`${String(s+1).padStart(2,'0')} / ${layers[s][0]}`;
+ $('#sceneShort').textContent=scenes[state.scene][1];
+ $('#slideTitle').textContent=quiet?'安靜，回來了。':copy[s][0];
+ $('#slideDescription').textContent=quiet?'聽見剛剛騰出的空間了嗎？下一圈，回到自己的呼吸。':all&&!state.includeMind?'留白中心，讓其餘五個層次一起展開。':copy[s][1];
+ $('#centerEnglish').textContent=all?'TOGETHER':layers[s][0];
+ $('#centerWord').textContent=all?'共鳴':s===0?(quiet?'安靜':'紛擾'):layers[s][2];
+ $('#sphereCaption').textContent=all?'世界就在這裡。':quiet?'留白，然後出發。':'由內向外，慢慢聽。';
+ $('#sphere').setAttribute('aria-label',all?(state.includeMind?'六層球體全部亮起':'外在五層亮起，中心保持安靜'):quiet?'中心已熄滅，下一步是 I AM':`第 ${s+1} 層 ${layers[s][0]} 亮起，其餘層次保持安靜`);
+ document.querySelectorAll('.sphere-ring').forEach((g,i)=>{
+  const active=all?(i>0||state.includeMind):(s===i&&!quiet);
+  g.classList.toggle('active',active);g.classList.toggle('current',s===i&&!all);g.classList.toggle('passed',i<state.furthest);g.classList.toggle('all-lit',all&&active);
+  g.querySelector('.ring-hit').style.cursor=canGo(i)?'pointer':'default';
  });
- $('#mindStart').hidden=gateOpen;
- $('#mindStart').textContent=loading?'取消載入 ×':playing?'暫停腦內聲音 Ⅱ':gateStarted?'繼續聽見碎念 ▶':'▶ 聽見腦內的聲音';
- $('#quietAll').hidden=gateOpen;$('#mindContinue').disabled=!gateOpen;$('#mindReset').hidden=!gateOpen;
- $('#gateMessage').textContent=gateOpen?'五個念頭都已安放。聽見剛剛騰出的空間了嗎？準備好，就從一口呼吸出發。':`還有 ${remaining} 個念頭。逐一關閉，或一鍵全部安放，才能出發往外聆聽。暫停播放不會解鎖。`;
- $('#sceneStop').disabled=!gateOpen;
+ document.querySelectorAll('.progress button').forEach((b,i)=>{b.disabled=!canGo(i);b.classList.toggle('active',i===s);b.classList.toggle('visited',i<=state.furthest);b.setAttribute('aria-current',i===s?'step':'false')});
+ $('#thoughtControls').hidden=s!==0||state.gateOpen;
+ $('#quietPanel').hidden=!quiet;
+ $('#listeningCue').hidden=s===0||all;
+ $('#wholeOptions').hidden=!all;
+ $('#includeMind').checked=state.includeMind;$('#includeMind').disabled=state.real;
+ $('#cueText').textContent=s===1?'此刻，聽見真實錄音裡的自然呼吸。':s>=2&&s<=5?`此刻：${scenes[state.scene][4][s-2]}。`:'';
+ if(s>=1&&s<=5&&state.real)$('#cueText').textContent=layers[s][5];
+ document.querySelectorAll('[data-mute]').forEach((b,i)=>{b.disabled=state.muted[i];b.classList.toggle('quiet',state.muted[i]);b.querySelector('.voice-indicator').textContent=state.muted[i]?'✓':'×'});
+ $('#status').textContent=statusText();$('#pageCount').textContent=`${String(s+1).padStart(2,'0')} / 07`;
+ $('#previous').disabled=s===0;
+ $('#next').disabled=!state.gateOpen;
+ $('#nextLabel').textContent=s===0?'從呼吸出發':s===5?'全部亮起':all?'再走一次':'下一層';
+ $('#playIcon').textContent=state.loading?'×':state.playing?'Ⅱ':'▶';
+ $('#playLabel').textContent=state.loading?'取消載入':state.playing?'暫停':!state.gateStarted&&!state.gateOpen?'開始體驗':quiet?'停留片刻':all?'聆聽全部':'聆聽這一圈';
+ $('#play').disabled=quiet;
+ $('#volumeLabel').textContent=`音量 ${state.volume}%`;$('#volumeOutput').textContent=state.volume+'%';
+ $('#realMode').disabled=!state.gateOpen;$('#realMode').setAttribute('aria-pressed',state.real);
+ $('#realMode').firstChild.textContent=state.real?'✓ 正在聆聽真實環境 ':'聆聽真實環境 ';
+ $('#autoGuide').disabled=!state.gateOpen;$('#autoGuide').setAttribute('aria-pressed',state.guided);
+ $('#autoGuide').firstChild.textContent=state.guided?'停止自動引導 ':'六分鐘自動引導 ';
+ $('#settingsHint').textContent=state.gateOpen?'自動引導從 I AM 出發，每分鐘前進一圈，最後停在全景。':'先安放五個念頭，便能開啟這兩種練習。';
+ document.querySelectorAll('.scene-choice').forEach((b,i)=>{b.setAttribute('aria-pressed',i===state.scene);b.querySelector('.chosen').textContent=i===state.scene?'✓':'→'});
+ mix();
 }
-function muteThought(index){
- if(gateOpen)return;
- if(index===null)muted.fill(true);else muted[index]=true;engine?.closeThought(index);
- if(muted.every(Boolean)){requestId++;gateOpen=true;playing=false;loading=false;message='';layer=0;panorama=false;guided=false;}
+function animateSlide() {
+ const panel=$('.slide-panel');panel.classList.remove('entering');requestAnimationFrame(()=>panel.classList.add('entering'));
+}
+function stop(clearMessage=true) {
+ state.request++;state.playing=false;state.loading=false;if(clearMessage)state.message='';render();
+}
+async function start() {
+ const ticket=++state.request;state.message='';
+ if(state.real&&state.gateOpen){state.playing=true;state.loading=false;render();return}
+ try {
+  engine??=new SoundField();
+  // Resume synchronously within the user's click, before network awaits (iOS).
+  const resume=engine.ctx.resume();state.loading=true;state.playing=false;render();await resume;
+  let ready;
+  if(!state.gateOpen)ready=await engine.prepareMind(state.muted);
+  else {
+   const requests=[engine.prepare(state.scene)];
+   if(state.slide===ALL&&state.includeMind)requests.push(engine.prepareAllMind());
+   ready=(await Promise.all(requests)).every(Boolean);
+  }
+  if(ticket!==state.request||!ready)return;
+  state.playing=true;state.loading=false;if(!state.gateOpen)state.gateStarted=true;render();
+ } catch {
+  if(ticket!==state.request)return;
+  state.playing=false;state.loading=false;state.message='聲音載入失敗，請確認連線後再按播放。';render();
+ }
+}
+function changeSlide(to,{autoplay=true,fromGuide=false}={}) {
+ if(!canGo(to))return;
+ state.request++;state.loading=false;state.slide=to;state.stageTime=0;state.message='';if(!fromGuide)state.guided=false;
+ if(to===0&&state.gateOpen){state.playing=false;render()}
+ else if(autoplay)start();else{state.playing=false;render()}
+ animateSlide();
+}
+function next(fromGuide=false) {
+ if(!state.gateOpen)return;
+ if(state.slide===ALL){resetExperience();return}
+ const to=state.slide+1;state.furthest=Math.max(state.furthest,to);changeSlide(to,{fromGuide});
+}
+function muteThought(index) {
+ if(state.gateOpen)return;
+ if(index===null)state.muted.fill(true);else state.muted[index]=true;
+ engine?.closeThought(index);
+ if(state.muted.every(Boolean)){
+  state.request++;state.gateOpen=true;state.playing=false;state.loading=false;state.message='';state.furthest=Math.max(state.furthest,1);
+  render();$('#next').focus({preventScroll:true});return;
+ }
  render();
 }
-$('#thoughtCards').onclick=e=>{const button=e.target.closest('[data-mute]');if(button)muteThought(+button.dataset.mute)};
+function resetExperience() {
+ stop();engine?.resetMind();state.slide=0;state.furthest=0;state.gateOpen=false;state.gateStarted=false;state.muted.fill(false);state.real=false;state.guided=false;state.includeMind=true;state.stageTime=0;
+ animateSlide();start();
+}
+function openSheet(id){$('#'+id).showModal()}
+$('#play').onclick=()=>state.playing||state.loading?stop():start();
+$('#next').onclick=()=>next();
+$('#previous').onclick=()=>changeSlide(state.slide-1,{autoplay:state.playing||state.loading});
+$('#progress').onclick=e=>{const b=e.target.closest('[data-slide]');if(b&&!b.disabled)changeSlide(+b.dataset.slide)};
+let ignoreSphereClickUntil=0;
+$('#sphere').onclick=e=>{if(performance.now()<ignoreSphereClickUntil)return;const c=e.target.closest('[data-jump]');if(c)changeSlide(+c.dataset.jump)};
+$('#thoughtControls').onclick=e=>{const b=e.target.closest('[data-mute]');if(b&&!b.disabled)muteThought(+b.dataset.mute)};
 $('#quietAll').onclick=()=>muteThought(null);
-$('#mindStart').onclick=()=>{if(playing||loading)stop();else start()};
-$('#mindContinue').onclick=()=>{if(!gateOpen)return;setLayer(1);start();$('#steps').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'center'})};
-$('#mindReset').onclick=()=>{stop();gateOpen=false;gateStarted=false;muted.fill(false);layer=0;panorama=false;guided=false;real=false;engine?.resetMind();start()};
-$('#notes').oninput=()=>{notes[key()]=$('#notes').value;try{localStorage.setItem('sound-spheres-notes',JSON.stringify(notes));$('#saveStatus').textContent='已儲存在此瀏覽器。'}catch{$('#saveStatus').textContent='瀏覽器無法儲存，請在離開前匯出筆記。'}};
-$('#download').onclick=()=>{let txt='# 我的聲音球體\n\n'+new Date().toLocaleString('zh-TW')+'\n\n';for(let s=0;s<5;s++)for(let l=0;l<6;l++)if(notes[`${s}-${l}`])txt+=`## ${scenes[s][1]} / ${layers[l][0]}\n${notes[`${s}-${l}`]}\n\n`;let url=URL.createObjectURL(new Blob([txt],{type:'text/markdown;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='我的聲音球體.md';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
-$('#about').onclick=()=>$('#info').showModal();$('#close').onclick=()=>$('#info').close();
+$('#replayMind').onclick=()=>resetExperience();
+$('#includeMind').onchange=()=>{state.includeMind=$('#includeMind').checked;if(state.playing||state.loading)start();else render()};
+$('#sceneButton').onclick=()=>openSheet('sceneDialog');
+$('#helpButton').onclick=()=>openSheet('helpDialog');
+$('#settingsButton').onclick=()=>openSheet('settingsDialog');
+$('#sceneList').onclick=e=>{
+ const b=e.target.closest('[data-scene]');if(!b)return;
+ const selected=+b.dataset.scene,changed=selected!==state.scene;state.scene=selected;$('#sceneDialog').close();
+ if(changed&&state.gateOpen&&(state.playing||state.loading))start();else render();
+};
+$('#volume').oninput=()=>{state.volume=Number($('#volume').value);render()};
+$('#realMode').onclick=()=>{if(!state.gateOpen)return;const wasPlaying=state.playing||state.loading;stop();state.real=!state.real;render();if(wasPlaying)start()};
+$('#autoGuide').onclick=()=>{
+ if(!state.gateOpen)return;
+ if(state.guided){state.guided=false;render();return}
+ state.guided=true;state.furthest=Math.max(state.furthest,1);$('#settingsDialog').close();changeSlide(1,{fromGuide:true});
+};
+let editKey=null;
+$('#notesButton').onclick=()=>{editKey=noteKey();$('#noteLabel').textContent=`${scenes[state.scene][1]} · ${state.slide===ALL?'全部一起聽':layers[state.slide][0]}`;$('#notes').value=notes[editKey]||'';openSheet('notesDialog')};
+$('#notes').oninput=()=>{if(editKey===null)return;notes[editKey]=$('#notes').value;try{localStorage.setItem('sound-spheres-notes',JSON.stringify(notes));$('#saveStatus').textContent='已儲存在此瀏覽器。'}catch{$('#saveStatus').textContent='無法儲存，請先匯出。'}};
+$('#download').onclick=()=>{
+ let txt='# 我的聲音球體\n\n'+new Date().toLocaleString('zh-TW')+'\n\n';
+ for(let s=0;s<5;s++)for(const l of [0,1,2,3,4,5,'all'])if(notes[`${s}-${l}`])txt+=`## ${scenes[s][1]} / ${l==='all'?'全部一起聽':layers[l][0]}\n${notes[`${s}-${l}`]}\n\n`;
+ const url=URL.createObjectURL(new Blob([txt],{type:'text/markdown;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='我的聲音球體.md';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+document.querySelectorAll('[data-close]').forEach(button=>button.onclick=()=>button.closest('dialog').close());
+document.querySelectorAll('dialog').forEach(dialog=>dialog.addEventListener('click',e=>{if(e.target===dialog){const rect=dialog.getBoundingClientRect();if(e.clientX<rect.left||e.clientX>rect.right||e.clientY<rect.top||e.clientY>rect.bottom)dialog.close()}}));
+document.addEventListener('keydown',e=>{
+ if(document.querySelector('dialog[open]')||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||e.altKey||e.metaKey||e.ctrlKey)return;
+ if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();next()}
+ if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();changeSlide(state.slide-1,{autoplay:state.playing})}
+ if(e.code==='Space'&&e.target.tagName!=='BUTTON'){e.preventDefault();state.playing||state.loading?stop():start()}
+});
+let gesture=null;
+$('#sphereZone').addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;gesture={x:e.clientX,y:e.clientY,id:e.pointerId}});
+$('#sphereZone').addEventListener('pointerup',e=>{if(!gesture||gesture.id!==e.pointerId)return;const dx=e.clientX-gesture.x,dy=e.clientY-gesture.y;gesture=null;if(Math.max(Math.abs(dx),Math.abs(dy))<45)return;ignoreSphereClickUntil=performance.now()+400;if(Math.abs(dx)>Math.abs(dy)?dx<0:dy<0)next();else changeSlide(state.slide-1,{autoplay:state.playing})});
+$('#sphereZone').addEventListener('pointercancel',()=>gesture=null);
 let previousTick=performance.now();
-setInterval(()=>{const now=performance.now(),delta=(now-previousTick)/1000;previousTick=now;if(!playing||loading)return;elapsed+=delta;stageTime+=delta;$('#timer').textContent=`${String(Math.floor(elapsed/60)).padStart(2,'0')}:${String(Math.floor(elapsed)%60).padStart(2,'0')}`;if(guided&&stageTime>=60){if(layer<5)setLayer(layer+1);else{playing=false;guided=false;message='練習完成 · 留下一筆，將聆聽帶回生活。';render()}}},250);
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&(playing||loading))stop()});
-let lastMeter=0;function meter(now){if(now-lastMeter>80){lastMeter=now;const level=engine&&playing&&!real?engine.level():0;$('#meterFill').style.width=Math.min(100,Math.max(0,(20*Math.log10(level||.00001)+60)/60*100))+'%'}requestAnimationFrame(meter)}requestAnimationFrame(meter);render();
+setInterval(()=>{
+ const now=performance.now(),delta=(now-previousTick)/1000;previousTick=now;
+ if(!state.playing||state.loading||!state.guided||document.querySelector('dialog[open]'))return;
+ state.stageTime+=delta;
+ if(state.stageTime>=60){if(state.slide<ALL)next(true);else{state.guided=false;stop();state.message='六分鐘練習完成。留下一筆，帶回生活。';render()}}
+ else $('#status').textContent=statusText();
+},250);
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&(state.playing||state.loading))stop()});
+let lastMeter=0;
+function meter(now){if(now-lastMeter>100){lastMeter=now;const level=engine&&state.playing&&!state.real?engine.level():0;$('#signalFill').style.width=Math.min(100,Math.max(0,(20*Math.log10(level||.00001)+60)/60*100))+'%'}requestAnimationFrame(meter)}
+requestAnimationFrame(meter);render();
