@@ -11,6 +11,11 @@ const AUDIO_SCENES = [
 const AUDIO_OFFSETS = {
   'forest-birds': 15, 'forest-steps': 5, 'forest-stream': 6, 'forest-unknown': 2
 };
+// Blend mode: every sphere sounds at once, loudest at the focused layer (fractional,
+// so sweeping across the rings crossfades instead of stepping). Sphere 0 (I THINK) stays shut.
+const BLEND_FLOOR = .14;
+const blendWeight = (sphere, focus) =>
+  sphere === 0 ? 0 : Math.max(BLEND_FLOOR, 1 - Math.abs(sphere - focus) * .26);
 class SoundField {
   constructor(context = null) {
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -104,18 +109,21 @@ class SoundField {
     for(const n of this.mindNodes){n.source.stop();n.source.disconnect();n.gain.disconnect();n.pan.disconnect()}
     this.mindNodes=[];
   }
-  mix({playing, real, layer, panorama, solo, volume, gateOpen=true, muted=[], includeMind=false}) {
+  mix({playing, real, layer, panorama, solo, volume, gateOpen=true, muted=[], includeMind=false, blend=null}) {
     const t = this.ctx.currentTime;
     this.master.gain.setTargetAtTime(playing && !real ? volume / 100 : 0, t, .14);
     this.mindNodes.forEach((n,i)=>n.gain.gain.setTargetAtTime(!gateOpen&&!muted[i] ? .62 : panorama&&includeMind ? .18 : 0,t,.12));
     this.nodes.forEach((n, i) => {
       const sphere = i + 1;
       const fullMix = this.scene === 0 ? [0, .30, .50, .75, .95, .30] : this.scene === 1 ? [0, .35, .45, .72, .40, .35] : [0, .35, .45, .85, .55, .40];
-      const weight = !gateOpen ? 0 : panorama ? fullMix[sphere]
+      const weight = !gateOpen ? 0
+        : blend !== null ? blendWeight(sphere, blend)
+        : panorama ? fullMix[sphere]
         : layer === 0 ? 0
         : solo ? (sphere === layer ? 1 : 0)
         : sphere === layer ? 1 : sphere < layer ? (sphere === 1 ? .12 : .25) : 0;
-      n.gain.gain.setTargetAtTime(weight, t, .25);
+      // Sweeping needs to feel immediate; layer-to-layer moves stay unhurried.
+      n.gain.gain.setTargetAtTime(weight, t, blend !== null ? .12 : .25);
     });
   }
   level() {
