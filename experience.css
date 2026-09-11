@@ -33,6 +33,15 @@ footer{color:#95a58f}
 .blend-panel small{font-size:11px;line-height:1.7;color:var(--muted)}
 .scene-choice[disabled]{opacity:.4;cursor:default}
 .scene-choice[disabled] small{color:var(--gold)}
+.loading-overlay{position:absolute;z-index:20;inset:0;display:grid;place-items:center;padding:24px;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s}
+.loading-overlay:before{content:'';position:absolute;inset:0;background:#07110da8;backdrop-filter:blur(7px)}
+.loading-card{position:relative;width:min(320px,calc(100vw - 56px));min-height:190px;border:1px solid #cfb78370;background:linear-gradient(180deg,#1d2d25f2,#101d19f2);box-shadow:0 24px 90px #0009,0 0 0 1px #ffffff08 inset;display:grid;place-items:center;text-align:center;gap:12px;padding:28px;border-radius:8px;transform:translateY(10px) scale(.96);transition:transform .25s;color:var(--ink)}
+.loading-spinner{width:58px;height:58px;border-radius:50%;border:1px solid #cfb78345;border-top-color:var(--gold);border-right-color:#e9d9a8;box-shadow:0 0 32px #d2bf8e20;animation:loading-spin 1s linear infinite}
+.loading-card strong{font:400 24px/1.35 "Songti TC","Noto Serif TC",serif;letter-spacing:2px;color:var(--gold)}
+.loading-card span:last-child{font-size:12px;line-height:1.7;color:var(--muted)}
+body.loading-audio .loading-overlay{opacity:1;visibility:visible}
+body.loading-audio .loading-card{transform:none}
+@keyframes loading-spin{to{transform:rotate(360deg)}}
 @media(max-width:700px){.blend-panel{min-height:94px}.blend-panel small{font-size:10px}}
 @media(max-height:710px) and (max-width:700px){.blend-panel{min-height:85px;gap:6px}.blend-panel small{font-size:9.5px;line-height:1.6}}
 @media(max-height:500px) and (orientation:landscape){.blend-panel{min-height:77px;gap:5px}.blend-panel small{font-size:9px}}

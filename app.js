@@ -1,6 +1,6 @@
 'use strict';
 // Stale cached builds have caused confusion twice; say plainly which one is running.
-const BUILD = 'v11 · stronger breath lead';
+const BUILD = 'v12 · centered loading overlay';
 console.info(`聲音球體 build: ${BUILD}`);
 const $ = selector => document.querySelector(selector);
 const ALL = 6;
@@ -55,6 +55,7 @@ function render() {
  document.body.classList.toggle('playing',state.playing&&!state.loading);
  document.body.classList.toggle('paused',!state.playing);
  document.body.classList.toggle('blend',blend);
+ document.body.classList.toggle('loading-audio',state.loading);
  $('#slideEnglish').textContent=blend?'08 / BLEND':all?'07 / ALL TOGETHER':`${String(s+1).padStart(2,'0')} / ${layers[s][0]}`;
  $('#sceneShort').textContent=scenes[state.scene][1];
  $('#slideTitle').textContent=quiet?'安靜，回來了。':copy[s][0];
@@ -81,6 +82,9 @@ function render() {
  if(s>=1&&s<=5&&state.real)$('#cueText').textContent=layers[s][5];
  document.querySelectorAll('[data-mute]').forEach((b,i)=>{b.disabled=state.muted[i];b.classList.toggle('quiet',state.muted[i]);b.querySelector('.voice-indicator').textContent=state.muted[i]?'✓':'×'});
  $('#status').textContent=statusText();$('#pageCount').textContent=`${String(s+1).padStart(2,'0')} / 08`;
+ $('#loadingOverlay').setAttribute('aria-hidden',state.loading?'false':'true');
+ $('#loadingTitle').textContent=state.gateOpen?'正在載入這裡的聲音':'正在準備內在聲音';
+ $('#loadingDetail').textContent=state.gateOpen?'音檔準備好就會自動開始。':'第一次播放需要一點時間，正在喚醒五個聲音。';
  $('#previous').disabled=s===0;
  $('#next').disabled=!state.gateOpen;
  $('#nextLabel').textContent=s===0?'從呼吸出發':s===5?'全部亮起':all?'交融聆聽':blend?'再走一次':'下一層';

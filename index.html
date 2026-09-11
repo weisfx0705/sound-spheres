@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#101d19">
   <meta name="description" content="從五個內在念頭，到六層真實聲景。一頁完成、為手機設計的聲音球體聆聽體驗。">
   <title>聲音球體 — 一圈，一個世界</title>
-  <link rel="stylesheet" href="experience.css?v=11">
+  <link rel="stylesheet" href="experience.css?v=12">
 </head>
 <body>
 <div class="experience" id="experience">
@@ -52,6 +52,14 @@
     </section>
   </main>
 
+  <div id="loadingOverlay" class="loading-overlay" role="status" aria-live="polite" aria-hidden="true">
+    <div class="loading-card">
+      <span class="loading-spinner" aria-hidden="true"></span>
+      <strong id="loadingTitle">正在載入聲音</strong>
+      <span id="loadingDetail">請稍等，音檔準備好就會開始播放。</span>
+    </div>
+  </div>
+
   <section class="control-deck" aria-label="體驗控制">
     <div class="status-row"><span id="status" role="status" aria-live="polite">戴上耳機，按下開始。</span><span class="signal" aria-hidden="true"><i id="signalFill"></i></span><span id="pageCount">01 / 08</span></div>
     <nav class="progress" id="progress" aria-label="聆聽進度"></nav>
@@ -95,9 +103,9 @@
   <p>念頭不必真的消失；這是把注意力帶回當下的練習。語音為 AI 生成，外在聲景為免費授權實錄的剪輯重構。<a href="resources.html">完整音訊來源與授權 ↗</a></p>
 </dialog>
 <!-- ?v=N is shared by every asset below and by experience.css: bump it on ANY code or style change. -->
-<script src="scene-data.js?v=11"></script>
-<script src="inner-voices.js?v=11"></script>
-<script src="audio-engine.js?v=11"></script>
-<script src="app.js?v=11"></script>
+<script src="scene-data.js?v=12"></script>
+<script src="inner-voices.js?v=12"></script>
+<script src="audio-engine.js?v=12"></script>
+<script src="app.js?v=12"></script>
 </body>
 </html>
